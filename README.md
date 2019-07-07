@@ -15,7 +15,7 @@ This repository contains the following files:
 
 - **plot_signals.py** - Allows plotting of single signals from each database and then plotting both signals on the same plot.
 
-- **xqrs_analysis.py** - Computes the overall average QRS widths from all database samples and calculates the difference between the database.
+- **xqrs_analysis.py** - Computes the overall average QRS widths from all database samples and calculates the difference between the databases.
 
 2019. © Krupalija Ehlimana
 
