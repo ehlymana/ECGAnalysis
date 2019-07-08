@@ -1,4 +1,10 @@
 \BOOKMARK [1][-]{section.1}{Uvod}{}% 1
-\BOOKMARK [1][-]{section.2}{Poremećaj ritma rada srca}{}% 2
-\BOOKMARK [1][-]{section.3}{Poremećaji krvnog pritiska}{}% 3
-\BOOKMARK [1][-]{section.4}{Analiza\040EKG\040signala}{}% 4
+\BOOKMARK [1][-]{section.2}{Poremećaji koji dovode do promjene EKG signala}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Aritmija}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Poremećaji krvnog pritiska}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Analiza\040EKG\040signala}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Preuzimanje\040signala\040iz\040ciljanih\040baza\040podataka}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{Prikaz\040EKG\040signala}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.3}{Analiza\040otkucaja\040srca}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.4}{Analiza\040QRS\040kompleksa}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{Zaključak}{}% 10

@@ -24,7 +24,9 @@ U ovom radu biti će dat opis aritmije i visokog krvnog pritiska kao poremećaja
 
 \newpage
 
-\section{Poremećaj ritma rada srca}
+\section{Poremećaji koji dovode do promjene EKG signala}
+
+\subsection{Aritmija}
 
 \quad Normalan rad srca karakteriše stabilan ritam rada - srce koje pravilno radi, pumpa krv u pravilnim vremenskim razmacima te je ritam srca pravilan i ujednačen. U slučaju pravilnog rada srca, na EKG snimku moguće je vidjeti pravilan razmak između PQRS kompleksa - depolarizacija pretkomora i komora, grčenje srčanog mišića, pumpanje krvi te polarizacija i opuštanje srčanog mišića dešavaju se u pravilnim vremenskim razmacima. Ovi vremenski razmaci mogu varirati u rasponu od maksimalno $\delta$ = 0.16 sekundi. EKG snimak pacijenata koji nemaju aritmiju sastoji se od 60 do 100 PQRS kompleksa po minuti (mada se granica tolerancije u nekim slučajevima može spustiti i do 50 bpm). \cite{arrhythmia-book} \\
 
@@ -72,9 +74,7 @@ Tipičan EKG snimak pacijenta čije srce karakteriše nepravilan rad moguće je 
 
 \end{enumerate}
 
-\newpage
-
-\section{Poremećaji krvnog pritiska}
+\subsection{Poremećaji krvnog pritiska}
 
 \quad Vrijednost krvnog pritiska u arterijama stalno se mijenja, jer krv nije statična komponenta u tijelu, već konstantno protiče kroz krvne žile (prosječan protok krvi kroz arterije mjeri se u kubnim centimetrima i ovisi od veličine arterije i njenog položaja u tijelu). \cite{blood-pressure}
 Postoje dvije karakteristične vrijednosti krvnog pritiska:
@@ -106,16 +106,276 @@ Na Slici \ref{s5} prikazan je EKG signal pacijenta koji duži vremenski period b
 
 \section{Analiza EKG signala}
 
-\quad Za analizu EKG signala pacijenata s prethodno opisanim vrstama poremećaja (aritmija i visok krvni pritisak) biti će korištene sljedeće PhysioNet baze podataka \cite{physionet}:
+\quad Za analizu EKG signala pacijenata s prethodno opisanim vrstama poremećaja (aritmija i visok krvni pritisak)\footnote{Cijeli kod dostupan je na sljedećem linku: \url{https://github.com/ehlymana/ECGAnalysis}.} biti će korištene sljedeće PhysioNet baze podataka \cite{physionet}:
 
 \begin{itemize}
 \renewcommand\labelitemi{-}
 
 \item \textit{Baza podataka za pacijente s aritmijom}: \href{https://physionet.org/physiobank/database/mitdb/}{MIT-BIH Arrhythmia Database} \cite{mit-bih};
 
-\item \textit{Baza podataka za pacijente s visokim krvnim pritiskom}: \href{https://physionet.org/physiobank/database/shareedb/}{Smart Health for Assessing the Risk of Events via ECG (SHAREE) Database} \cite{sharee}.
+\item \textit{Baza podataka za pacijente s visokim krvnim pritiskom}\footnote{Budući da svi signali iz ove baze podataka zauzimaju veliku količinu podataka (> 1 GB), isti nisu postavljeni u repozitorij projekta.}: \href{https://physionet.org/physiobank/database/shareedb/}{Smart Health for Assessing the Risk of Events via ECG (SHAREE) Database} \cite{sharee}.
 
 \end{itemize}
+
+Sadržaj repozitorija vidljiv je na Slici \ref{repository}. Za analizu EKG signala kreirana su četiri različita programska koda:
+
+\begin{enumerate}
+
+\item \texttt{download\_databases}: Služi za preuzimanje signala koje je potrebno analizirati iz zvaničnih PhysioNet baza podataka;
+
+\item \texttt{heart\_rate\_analysis}: Služi za izračunavanje pojedinačnih te prosječnih brzina otkucaja srca ciljanih EKG signala, te za njihov prikaz na graficima u obliku funkcija i histograma;
+
+\item \texttt{plot\_signals}: Služi za prikazivanje EKG signala iz baza podataka na graficima, pojedinačno ili kombinovano, u vremenu cijelog trajanja snimka ili samo u određenim trenucima;
+
+\item \texttt{xqrs\_analysis}: Služi za izračunavanje širine QRS kompleksa svih EKG signala u bazama podataka te njihovo uspoređivanje.
+
+\end{enumerate}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.7]{../res/repository.PNG}
+\caption{Sadržaj repozitorija programskog rješenja za analizu PhysioNet EKG signala}
+\label{repository}
+\end{figure}
+
+\subsection{Preuzimanje signala iz ciljanih baza podataka}
+
+\quad Biblioteka \texttt{wfdb} prilagođena je PhysioNet bazama podataka te omogućava ne samo jednostavnu analizu i prikaz podataka, već i preuzimanje sadržaja (što je mnogo teže uraditi koristeći direktno PhysioNet). U Listingu \ref{downloadlst} prikazan je način preuzimanja podataka iz ciljanih PhysioNet baza podataka - dovoljno je specificirati željeni direktorij u koji će svi signali biti preuzeti. Nakon pokretanja, korisnik dobiva informacije u konzoli kao što je prikazano na Slici \ref{download}. Važno je napomenuti da se MIT-BIH i SHAREE baze podataka razlikuju u mnogočemu, uključujući tip anotacija (MIT-BH: \texttt{atr}, SHAREE: \texttt{qrs}), no najistaknutija razlika je veličina podataka, zbog čega preuzimanje podataka iz MIT-BIH baze traje nekoliko sekundi, dok preuzimanje podataka iz SHAREE baze traje više od pola sata.
+
+\begin{figure}
+\captionof{lstlisting}{Preuzimanje traženih PhysioNet baza podataka}
+\label{downloadlst}
+\begin{lstlisting}[language=python]
+import wfdb # for physionet tools
+import os # for downloading samples from databases
+from IPython.display import display # for displaying physionet libraries
+
+if __name__ == '__main__':
+
+    # Make download directories in your current working directory
+    current_working_directory = os.getcwd()
+
+    # the download directory for the arrhythmia database
+    directory_database1 = os.path.join(current_working_directory, 'mitdb')
+
+    # the download directory for the hypertension database
+    directory_database2 = os.path.join(current_working_directory, 'shareedb')
+
+    # Download all the WFDB content
+    wfdb.dl_database('mitdb', dl_dir=directory_database1)
+    wfdb.dl_database('shareedb', dl_dir=directory_database2)
+
+    # Display the downloaded content in the folders
+    display(os.listdir(directory_database1))
+    display(os.listdir(directory_database2))
+\end{lstlisting}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.7]{../res/download.PNG}
+\caption{Prikaz informacija o preuzimanju signala iz ciljanih baza podataka u konzoli}
+\label{download}
+\end{figure}
+
+\subsection{Prikaz EKG signala}
+
+\quad Biblioteka \texttt{wfdb} nudi i alate za vrlo jednostavan prikaz prethodno preuzetih EKG signala. Najvažnije funkcije koje se koriste za prikaz EKG signala su:
+
+\begin{itemize}
+\renewcommand\labelitemi{-}
+
+\item \texttt{wfdb.plot\_items}, koja zahtijeva prethodno učitavanje signala koristeći funkciju \texttt{wfdb} \texttt{.rdrecord} te učitavanje anotacija za dati signal koristeći funkciju \texttt{wfdb.rdann}. Prikaz signala koristeći ovu funkciju moguć je od prvog do ciljanog trenutka (odnosno, nemoguće je prikazati signal počevši od nekog proizvoljnog trenutka, već je potrebno produžiti trajanje prikaza te izvršiti uvećavanje na grafiku);
+
+\item \texttt{matplotlib.pyplot.plot}, koja se koristi za prikaz bilo kakvih signala na graficima, te biblioteka \texttt{wfdb} nudi i alate za pretvaranje signala u oblik pogodan za ovakav prikaz, koristeći funkciju \texttt{wfdb.rdsamp}. Na ovaj način moguće je jednostavno izbjeći ograničenja korištenja gotove funkcije za prikaz signala, te je tako moguće na jednom grafiku prikazati više EKG signala, u proizvoljnim bojama, te specificirajući željene početne i završne trenutke prikaza signala.
+
+\end{itemize}
+
+Korištenje \texttt{wfdb} funkcije za prikaz signala demonstrirano je u Listingu \ref{wfdb-plot}. Ukoliko se želi prikazati signal od početnog do ciljanog trenutka, ovakav prikaz dovoljan je da se dobiju sve neophodne informacije, kao što je prikazano na Slici \ref{plot-arrhythmia}, dok je u slučaju traženog prikaza od nekog drugog trenutka potrebno izvršiti manuelno uvećanje na dobivenom grafiku, kao što je prikazano na Slici \ref{plot-hypertension}. Za signal koji prikazuje hipertenziju ovakav prikaz je prijeko potreban, jer prikaz relevantnih informacija počinje neko vrijeme nakon početka snimka, te bi prikaz od početnog trenutka bio nerelevantan za sve analize i proučavanja. 
+
+\begin{figure}
+\captionof{lstlisting}{Prikaz EKG signala koristeći biblioteku \texttt{wfdb}}
+\label{wfdb-plot}
+\begin{lstlisting}[language=python]
+    # Load record and annotation for the sample arrhythmia signal
+
+    record_arrhythmia = wfdb.rdrecord('mitdb/100', sampfrom=0, sampto=4000)
+    annotation_arrhyhthmia = wfdb.rdann('mitdb/100', 'atr', sampfrom=0, sampto=4000)
+
+    # Plot signal
+
+    wfdb.plot_items(signal=record_arrhythmia.p_signal, ann_samp=[annotation_arrhyhthmia.sample], title='MIT-BIH Record 100',
+                    time_units='samples', figsize=(10, 4))
+
+    # Load record and annotation for the sample hypertension signal
+
+    record_hypertension = wfdb.rdrecord('shareedb/01911', sampfrom=0, sampto=104000)
+    annotation_hypertension = wfdb.rdann('shareedb/01911', 'qrs', sampfrom=0, sampto=104000)
+
+    # Plot signal
+
+    wfdb.plot_items(signal=record_hypertension.p_signal, ann_samp=[annotation_hypertension.sample],
+                    title='SHARE-EDB Record 01911',
+                    time_units='samples', figsize=(10, 4))
+\end{lstlisting}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.55]{../res/plot-mit.PNG}
+\caption{Prikaz EKG signala iz MIT-BiH baze podataka koristeći biblioteku \texttt{wfdb}}
+\label{plot-arrhythmia}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.45]{../res/plot-sharee.PNG}
+\caption{Prikaz EKG signala iz SHAREE baze podataka koristeći biblioteku \texttt{wfdb}}
+\label{plot-hypertension}
+\end{figure}
+
+Korištenje \texttt{matplotlib.pyplot.plot} funkcije za prikaz signala demonstrirano je u Listingu \ref{wfdb-pyplot}. Ova funkcija korištena je za kombinovani prikaz signala, kako bi se mogle uočiti razlike u električnom potencijalu i varijacijama između signala iz različitih baza podataka. Odabran je vremenski raspon od 4,000 uzoraka (početni uzorak: br. 100,000, krajnji uzorak: 104,000) van početnog perioda kako bi se izbjegao šum koji nastaje na početku snimanja EKG signala (koji je prisutan u SHAREE signalima). \\
+
+Kombinovani prikaz signala iz dvije ciljane baze podataka vidljiv je na Slici \ref{combined}. Ono što je moguće uočiti na ovom prikazu je razlika između vrijednosti električnog potencijala signala - EKG signal pacijenata koji boluju od aritmije ima mnogo veće varijacije te niži električni potencijal u stanju mirovanja (između otkucaja), dok je kod pacijenata koji boluju od hipertenzije okvirni električni potencijal mnogo viši, te su varijacije vidno manje. Ovu razliku lakše je uočiti na uvećanom grafiku, što je vidljivo na Slici \ref{combined-zoom}. Također je lako uočiti da se otkucaji srca dešavaju mnogo češće na signalu pacijenta koji boluje od hipertenzije.
+
+\begin{figure}
+\captionof{lstlisting}{Prikaz EKG signala koristeći biblioteku \texttt{matplotlib.pyplot}}
+\label{wfdb-pyplot}
+\begin{lstlisting}[language=python]
+    # Read arrhythmia signal as a list of samples for plotting
+
+    signal_arrhythmia, fields = wfdb.rdsamp('mitdb/100', channels=[0], sampfrom=100000, sampto=104000)
+
+    # Read hypertension signal as a list of samples for plotting
+
+    signal_hypertension, fields = wfdb.rdsamp('shareedb/01911', channels=[0], sampfrom=100000, sampto=104000)
+
+    # Plot both signals on one plot
+
+    plt.plot(range(4000), signal_arrhythmia, 'b')
+    plt.plot(range(4000), signal_hypertension, 'g')
+
+    plt.show()
+\end{lstlisting}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.45]{../res/plot-combined.PNG}
+\caption{Kombinovani prikaz signala koristeći biblioteku \texttt{matplotlib.pyplot.plot}}
+\label{combined}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.45]{../res/plot-combined-zoom.PNG}
+\caption{Uvećani kombinovani prikaz signala koristeći biblioteku \texttt{matplotlib.pyplot.plot}}
+\label{combined-zoom}
+\end{figure}
+
+\subsection{Analiza otkucaja srca}
+
+\quad Za analizu otkucaja srca koje sadrže EKG signali, prvo je neophodno izvršiti izračun broja otkucaja srca iz električnih potencijala u ovisnosti od vremena (što je inicijalni oblik EKG signala). U tu svrhu koristi se funkcija \texttt{wfdb.processing.compute\_hr}, koja prethodno zahtijeva detekciju QRS kompleksa na signalu, što se čini koristeći funkciju \texttt{wfdb.processing} \texttt{.gqrs\_detect}. Izračunati broj otkucaja srca predstavlja listu sa pojedinačnim brzinama po ciklusu, odnosno, potrebno je izvršiti usrednjavanje ove vrijednosti. U tu svrhu napisana je pomoćna funkcija \texttt{compute\_heart\_rate}. Naposlijetku je izvršeno usrednjavanje svih pojedinačnih vrijednosti otkucaja srca za sve signale u bazi podataka. \\
+
+Ovakav postupak ponovljen je za obje baze podataka, koristeći programski kod prikazan u Listingu \ref{compute-heart-rate}. Dobivena srednja vrijednost brzine otkucaja srca za obje baze te njihova međusobna razlika prikazana je na Slici \ref{heart-rate}, odakle je vidljivo da je ukupna srednja vrijednost brzine otkucaja srca veoma slična za obje baze podataka. No, nije teško doći do zaključka da ovakav način izračuna srednje vrijednosti brzine otkucaja srca ne može puno doprinijeti većim analizama. Iz tog razloga u nastavku će biti izvršena analiza pojedinačnih signala, tj. pojedinačnih brzina otkucaja srca.
+
+\begin{figure}[H]
+\captionof{lstlisting}{Izračun pojedinačne i ukupne srednje vrijednosti brzine otkucaja srca za EKG signale jedne baze podataka}
+\label{compute-heart-rate}
+\begin{lstlisting}[language=python]
+ # Iterate through all signals in the arrhythmia database
+
+    for filename in os.listdir(directory_database1):
+        if filename.endswith(".dat"):
+
+            record = wfdb.rdrecord('mitdb/' + os.path.splitext(filename)[0], sampfrom=100000, sampto=104000)
+            annotation = wfdb.rdann('mitdb/' + os.path.splitext(filename)[0], 'atr', sampfrom=100000, sampto=104000)
+
+            # Detect QRS complex
+
+            qrs_locations = wfdb.processing.gqrs_detect(record.p_signal[:, 0], fs=record.fs)
+
+            # Compute all heart rates for the signal
+
+            heart_rates = wfdb.processing.compute_hr(sig_len=record.sig_len, qrs_inds=qrs_locations, fs=record.fs)
+
+            current_heart_rate = compute_heart_rate(heart_rates)
+
+            overall_heart_rate_arrhythmia += current_heart_rate
+            no_of_signals_arrhythmia += 1
+
+            print('Heart rate of the current MIT-BIH signal is: ' + str(current_heart_rate) + ' bpm.')
+\end{lstlisting}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.75]{../res/heart-rate-analysis.PNG}
+\caption{Prikaz srednje vrijednosti brzine otkucaja srca za obje baze podataka}
+\label{heart-rate}
+\end{figure}
+
+Za dublje analize korištena je tehnika histogramiranja, odnosno izvršeno je zaokruživanje vrijednosti pojedinačnih brzina otkucaja srca na najbliže vrijednosti te njihov prikaz prema frekvenciji, što je prikazano na Slici \ref{histogram}. Također je korištena i tehnika prikaza dobivenih vrijednosti kao funkcija, kako bi se vidjele fluktuacije u vrijednostima kroz same \textit{dataset}-ove, što je prikazano na Slici \ref{function}. \\
+
+Iz dobivenih prikaza moguće je vidjeti da se frekvencije u brzinama otkucaja srca dosta razlikuju za ciljane baze podataka, te da, kao što je i očekivano, pacijenti koji boluju od hipertenzije mnogo češće imaju tipične vrijednosti krvnog pritiska (opseg 60 - 90 bpm) od pacijenata koji boluju od aritmije, čiji uzorci pokazuju mnogo veće fluktuacije. Iste zaključke moguće je donijeti gledajući prikaz u obliku funkcije, gdje su prelazi u funkciji baze podataka za aritmiju mnogo veći i češći nego kod baze podataka za hipertenziju.
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.55]{../res/plot-heart-rates-histogram.PNG}
+\caption{Prikaz histograma pojedinačnih vrijednosti za otkucaje srca}
+\label{histogram}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.55]{../res/plot-heart-rates.PNG}
+\caption{Prikaz funkcija brzina otkucaja srca}
+\label{function}
+\end{figure}
+
+\subsection{Analiza QRS kompleksa}
+
+\quad Za analizu QRS kompleksa, odnosno varijacije u njihovoj širini, korištena je funkcija \texttt{wfdb} \texttt{.processing.XQRS} u kombinaciji s funkcijom \texttt{xqrs.detect()}. Funkcija \texttt{XQRS} vrši formiranje tačaka koje predstavljaju QRS komplekse, dok funkcija \texttt{detect} vrši detekciju informacija o svim QRS kompleksima koje signal sadrži. Nakon što se detekcija završi, moguće je pročitati informaciju o srednjoj vrijednosti širine QRS kompleksa jednog signala, koristeći funkciju \texttt{qrs\_width}. \\
+
+Samo vršenje detekcije te analize QRS kompleksa izvršeno je za sve signale u obje baze podataka, koristeći programski kod prikazan u Listingu \ref{qrslst}. Nakon toga izvršeno je usrednjavanje vrijednosti te njihova usporedba, kao što je prikazano na Slici \ref{qrs}. Vidljivo je da je razlika u ukupnoj srednjoj širini QRS kompleksa između baza podataka veoma velika, što je i očekivano, budući da su velike fluktuacije u širini QRS kompleksa karakteristika EKG signala pacijenata koji boluju od aritmije.
+
+\begin{figure}[H]
+\captionof{lstlisting}{Izračun pojedinačne i ukupne srednje vrijednosti širine QRS kompleksa za EKG signale jedne baze podataka}
+\label{qrslst}
+\begin{lstlisting}[language=python]
+    # Iterate through all signals in the arrhythmia database
+
+    for filename in os.listdir(directory_database1):
+        if filename.endswith(".dat"):
+
+            signal, fields = wfdb.rdsamp('mitdb/' + os.path.splitext(filename)[0], channels=[0], sampfrom=100000, sampto=104000)
+            ann_ref = wfdb.rdann('mitdb/' + os.path.splitext(filename)[0], 'atr')
+            xqrs = wfdb.processing.XQRS(sig=signal[:, 0], fs=fields['fs'])
+            xqrs.detect()
+
+            overall_qrs_width_arrhythmia += xqrs.qrs_width
+            no_of_signals_arrhythmia += 1
+\end{lstlisting}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.75]{../res/qrs-width.PNG}
+\caption{Prikaz srednje vrijednosti širine QRS kompleksa za obje baze podataka}
+\label{qrs}
+\end{figure}
+
+\newpage
+
+\section{Zaključak}
+
+\quad PhysioNet se sastoji od velikog broja baza podataka EKG signala pacijenata s različitim tipovima kardiovaskularnih bolesti. Analiza ovih podataka može doprinijeti boljem razumijevanju istih bolesti, kao i načina za njihovu ranu detekciju, te samim tim i uspješno liječenje. Iz tog razloga važno je imati širok set alata koji omogućavaju brzu i jednostavnu analizu EKG signala u popularnim programskim jezicima. Glavna prednost \texttt{wfdb} biblioteke je dostupnost, dokumentovanost kao i prilagođenost PhysioNet bazama podataka. \\
+
+Razlike između EKG signala pacijenata koji boluju od aritmije u odnosu na pacijente koji boluju od povišenog krvnog pritiska su očigledne i lako uočljive. Električni potencijal EKG signala pacijenata koji boluju od hipertenzije je viši, brzina otkucaja srca je veća, no srednja vrijednost brzine otkucaja srca približno je ista (i u dozvoljenom opsegu) za obje baze podataka. Pacijenti koji boluju od aritmije češće imaju izrazito velike ili male brzine otkucaja srca (odnosno, izvan tipičnih referentnih vrijednosti), iz kojeg razloga je važno analizirati EKG signale pacijenta te povećati mogućnost dijagnosticiranja aritmije ukoliko je električni potencijal izrazito nizak te fluktuacija od referentnih vrijednosti velika. \\
+
+Možda najveći indikator da osoba boluje od aritmije je svakako širina QRS kompleksa EKG signala. Veoma širok srednji raspon QRS kompleksa ukazuje na to da su razmaci između otkucaja srca veliki, da postoji velika mogućnost od lažne depolarizacije (čime se vrijednost širine QRS kompleksa uduplava) te da QRS kompleksi mnogo odstupaju od referentnih vrijednosti. S druge strane, širina QRS kompleksa nije jak indikator da osoba boluje od hipertenzije - umjesto širine, visina QRS kompleksa mnogo je važnija za analizu kako bi se dijagnosticirala hipertenzija. \\
+
+Svi ovi podaci dobiveni su lako i brzo koristeći biblioteku \texttt{wfdb}. Dobivanje informacija moguće je u roku od nekoliko sekundi (s izuzetkom preuzimanja signala koji se sastoje od velike količine podataka, poput npr. SHAREE signala). Iz tog razloga trebale bi se vršiti analize između više baza podataka, kako bi se potencijalno našče povezanosti između različitih bolesti, njihovog utjecaja na EKG signale pacijenata kako bi se moglo primijeniti mašinsko učenje za automatsku detekciju i dijagnosticiranje različitih stanja na osnovu novoakviziranih EKG signala pacijenata.
 
 \newpage
 
