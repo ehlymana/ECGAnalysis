@@ -14,7 +14,7 @@ if __name__ == '__main__':
     directory_database2 = os.path.join(current_working_directory, 'shareedb')
 
     # Download all the WFDB content
-    #wfdb.dl_database('mitdb', dl_dir=directory_database1)
+    wfdb.dl_database('mitdb', dl_dir=directory_database1)
     wfdb.dl_database('shareedb', dl_dir=directory_database2)
 
     # Display the downloaded content in the folders

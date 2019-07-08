@@ -5,8 +5,8 @@ if __name__ == '__main__':
 
     # Load record and annotation for the sample arrhythmia signal
 
-    record_arrhythmia = wfdb.rdrecord('mitdb/100', sampfrom=100000, sampto=104000)
-    annotation_arrhyhthmia = wfdb.rdann('mitdb/100', 'atr', sampfrom=100000, sampto=104000)
+    record_arrhythmia = wfdb.rdrecord('mitdb/100', sampfrom=0, sampto=4000)
+    annotation_arrhyhthmia = wfdb.rdann('mitdb/100', 'atr', sampfrom=0, sampto=4000)
 
     # Plot signal
 
@@ -15,8 +15,8 @@ if __name__ == '__main__':
 
     # Load record and annotation for the sample hypertension signal
 
-    record_hypertension = wfdb.rdrecord('shareedb/01911', sampfrom=100000, sampto=104000)
-    annotation_hypertension = wfdb.rdann('shareedb/01911', 'qrs', sampfrom=100000, sampto=104000)
+    record_hypertension = wfdb.rdrecord('shareedb/01911', sampfrom=0, sampto=104000)
+    annotation_hypertension = wfdb.rdann('shareedb/01911', 'qrs', sampfrom=0, sampto=104000)
 
     # Plot signal
 
